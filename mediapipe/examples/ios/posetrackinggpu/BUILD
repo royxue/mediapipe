@@ -14,37 +14,20 @@
 
 load(
     "@build_bazel_rules_apple//apple:ios.bzl",
-    "ios_application",
-)
-load(
-    "//mediapipe/examples/ios:bundle_id.bzl",
-    "BUNDLE_ID_PREFIX",
-    "example_provisioning",
+    "ios_framework",
 )
 
-licenses(["notice"])
+ios_framework(
+    name = "PoseTrackingGpu",
 
-MIN_IOS_VERSION = "11.0"
-
-alias(
-    name = "posetrackinggpu",
-    actual = "PoseTrackingGpuApp",
-)
-
-ios_application(
-    name = "PoseTrackingGpuApp",
-    app_icons = ["//mediapipe/examples/ios/common:AppIcon"],
-    bundle_id = BUNDLE_ID_PREFIX + ".PoseTrackingGpu",
-    families = [
-        "iphone",
-        "ipad",
+    hdrs = [
+        "RPoseTracker.h",
     ],
-    infoplists = [
-        "//mediapipe/examples/ios/common:Info.plist",
-        "Info.plist",
-    ],
-    minimum_os_version = MIN_IOS_VERSION,
-    provisioning_profile = example_provisioning(),
+    
+    infoplists = ["Info.plist"],
+    bundle_id = "company.royx.RPoseTracker",
+    families = ["iphone", "ipad"],
+    minimum_os_version = "10.0",
     deps = [
         ":PoseTrackingGpuAppLibrary",
         "@ios_opencv//:OpencvFramework",
@@ -54,10 +37,10 @@ ios_application(
 objc_library(
     name = "PoseTrackingGpuAppLibrary",
     srcs = [
-        "PoseTrackingViewController.mm",
+        "RPoseTracker.mm",
     ],
     hdrs = [
-        "PoseTrackingViewController.h",
+        "RPoseTracker.h",
     ],
     copts = ["-std=c++17"],
     data = [
@@ -66,7 +49,9 @@ objc_library(
         "//mediapipe/modules/pose_landmark:pose_landmark_full.tflite",
     ],
     deps = [
-        "//mediapipe/examples/ios/common:CommonMediaPipeAppLibrary",
+        "//mediapipe/objc:mediapipe_framework_ios",
+        "//mediapipe/objc:mediapipe_input_sources_ios",
+        "//mediapipe/objc:mediapipe_layer_renderer",
     ] + select({
         "//mediapipe:ios_i386": [],
         "//mediapipe:ios_x86_64": [],
