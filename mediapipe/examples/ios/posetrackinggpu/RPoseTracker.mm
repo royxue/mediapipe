@@ -15,7 +15,7 @@ static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
 @end
 
 @interface Landmark()
-- (instancetype)initWithX:(float)x y:(float)y z:(float)z visibility:(float)visibility presence:(float)presence;
+- (instancetype)initWithX:(float)x y:(float)y;
 @end
 
 @implementation RPoseTracker {}
@@ -80,17 +80,17 @@ static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
 
 // Receives CVPixelBufferRef from the MediaPipe graph. Invoked on a MediaPipe worker thread.
 - (void)mediapipeGraph:(MPPGraph*)graph
-  didOutputPixelBuffer:(CVPixelBufferRef)pixelBuffer
+    didOutputPixelBuffer:(CVPixelBufferRef)pixelBuffer
             fromStream:(const std::string&)streamName
             timestamp:(const mediapipe::Timestamp &)timestamp{
-      if (streamName == kOutputStream) {
-          [_delegate rPoseTracker: self didOutputPixelBuffer: pixelBuffer timestamp:timestamp.Microseconds()];
-      }
+        if (streamName == kOutputStream) {
+            [_delegate rPoseTracker: self didOutputPixelBuffer: pixelBuffer timestamp:timestamp.Microseconds()];
+        }
 }
 
 // Receives a raw packet from the MediaPipe graph. Invoked on a MediaPipe worker thread.
 - (void)mediapipeGraph:(MPPGraph*)graph
-      didOutputPacket:(const ::mediapipe::Packet&)packet
+    didOutputPacket:(const ::mediapipe::Packet&)packet
             fromStream:(const std::string&)streamName {
 
     if (streamName == kLandmarksOutputStream) {
@@ -98,10 +98,17 @@ static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
         const auto& landmarks = packet.Get<::mediapipe::NormalizedLandmarkList>();
         NSMutableArray<Landmark *> *result = [NSMutableArray array];
         NSArray *indexNeeds = @[@16, @14, @12, @11, @13, @15, @24, @26, @28, @23, @25, @27];
-        for (NSNumber *i in indexNeeds) {
-            Landmark *landmark = [[Landmark alloc] initWithX:landmarks.landmark(i).x()
-                                                          y:landmarks.landmark(i).y()];
-            [result addObject:landmark];
+        // for (NSNumber *i in indexNeeds) {
+        //     Landmark *landmark = [[Landmark alloc] initWithX:landmarks.landmark(i).x()
+        //                                                 y:landmarks.landmark(i).y()];
+        //     [result addObject:landmark];
+        // }
+        for (int i = 0; i < landmarks.landmark_size(); ++i) {
+            if ([indexNeeds containsObject:@(i)]) {
+                Landmark *landmark = [[Landmark alloc] initWithX:landmarks.landmark(i).x()
+                                                            y:landmarks.landmark(i).y()];
+                [result addObject:landmark];
+            }
         }
         [_delegate rPoseTracker: self didOutputLandmarks: result timestamp:packet.Timestamp().Microseconds()];
     }
@@ -113,9 +120,9 @@ static const char* kVideoQueueLabel = "com.google.mediapipe.example.videoQueue";
     mediapipe::Timestamp::kTimestampUnitsPerSecond * CMTimeGetSeconds(timestamp)));
     
     [self.mediapipeGraph sendPixelBuffer:pixelBuffer
-                              intoStream:kInputStream
-                              packetType:MPPPacketTypePixelBuffer
-                              timestamp:graphTimestamp];
+                            intoStream:kInputStream
+                            packetType:MPPPacketTypePixelBuffer
+                            timestamp:graphTimestamp];
 }
 
 @end
